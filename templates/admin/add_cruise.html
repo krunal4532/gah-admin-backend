@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Cruise</title>
+</head>
+<body>
+    <h1>Add Cruise</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Description:</label><br>
+        <textarea name="description" rows="5" cols="50"></textarea><br><br>
+
+        <label>Image:</label><br>
+        <input type="file" name="image"><br><br>
+
+        <label>Visible:</label>
+        <input type="checkbox" name="visible" checked><br><br>
+
+        <button type="submit">Add Cruise</button>
+    </form>
+    <br><a href="{{ url_for('view_cruises') }}">Back to List</a>
+</body>
+</html>

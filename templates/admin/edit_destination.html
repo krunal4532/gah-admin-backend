@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Destination</title>
+</head>
+<body>
+    <h1>Edit Destination</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <p>
+            <label for="name">Name:</label><br>
+            <input type="text" name="name" value="{{ destination.name }}">
+        </p>
+        <p>
+            <label for="description">Description:</label><br>
+            <textarea name="description" rows="4" cols="50">{{ destination.description }}</textarea>
+        </p>
+        <p>
+            <label for="more_info">More Info:</label><br>
+            <textarea name="more_info" rows="4" cols="50">{{ destination.more_info }}</textarea>
+        </p>
+        <p>
+            <label>Current Image:</label><br>
+            {% if destination.image_filename %}
+               <img src='https://admin.greataccessholidays.com/static/uploads/${c.image_filename}' ... />
+<br>
+            {% else %}
+                No image uploaded.
+            {% endif %}
+        </p>
+        <p>
+            <label for="image">Change Image:</label><br>
+            <input type="file" name="image">
+        </p>
+        <p>
+            <label for="visible">Visible:</label>
+            <input type="checkbox" name="visible" {% if destination.visible %}checked{% endif %}>
+        </p>
+        <p><button type="submit">Update</button></p>
+    </form>
+    <p><a href="{{ url_for('view_destinations') }}">Back to List</a></p>
+</body>
+</html>

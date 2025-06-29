@@ -1,0 +1,11 @@
+<h2>Testimonials</h2>
+<table border="1">
+    <tr><th>ID</th><th>Author</th><th>Content</th></tr>
+    {% for t in testimonials %}
+    <tr>
+        <td>{{ t.id }}</td>
+        <td>{{ t.author }}</td>
+        <td>{{ t.content }}</td>
+    </tr>
+    {% endfor %}
+</table>

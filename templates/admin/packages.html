@@ -1,0 +1,12 @@
+<h2>Packages</h2>
+<table border="1">
+    <tr><th>ID</th><th>Title</th><th>Details</th><th>Image</th></tr>
+    {% for p in packages %}
+    <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.title }}</td>
+        <td>{{ p.details }}</td>
+        <td><img src="{{ url_for('static', filename='uploads/' ~ p.image) }}" width="100"/></td>
+    </tr>
+    {% endfor %}
+</table>

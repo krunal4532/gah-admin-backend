@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Property</title>
+</head>
+<body>
+    <h2>Edit Property</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label>State:</label>
+        <input type="text" name="state" value="{{ property.state }}"><br><br>
+
+        <label>Location:</label>
+        <input type="text" name="location" value="{{ property.location }}"><br><br>
+
+        <label>Property Name:</label>
+        <input type="text" name="name" value="{{ property.name }}"><br><br>
+
+        <label>Bedrooms:</label>
+        <input type="number" name="bedrooms" value="{{ property.bedrooms }}"><br><br>
+        
+        <label>Guests</label>
+<input type="number" name="guests" value="{{ property.guests or '' }}" required><br>
+
+<label>Beds</label>
+<input type="number" name="beds" value="{{ property.beds or '' }}" required><br>
+
+<label>Baths</label>
+<input type="number" name="baths" value="{{ property.baths or '' }}" required><br>
+
+<label>Price per Night</label>
+<input type="number" step="0.01" name="price_per_night" value="{{ property.price_per_night or '' }}" required><br>
+
+<label>Short Description</label>
+<textarea name="short_description" rows="3">{{ property.short_description or '' }}</textarea><br>
+
+        <label>Visible:</label>
+        <input type="checkbox" name="visible" {% if property.visible %}checked{% endif %}><br><br>
+
+        <label>Upload More Images:</label>
+        <input type="file" name="images" multiple><br><br>
+
+        <button type="submit">Update Property</button>
+    </form>
+
+    <h3>Existing Images</h3>
+    {% for image in images %}
+        <div style="margin-bottom:10px;">
+           <img src='https://admin.greataccessholidays.com/static/uploads/${c.image_filename}' ... />
+            <a href="{{ url_for('delete_image', image_id=image.id, property_id=property.id) }}" onclick="return confirm('Delete this image?')">Delete Image</a>
+        </div>
+    {% endfor %}
+
+    <br><a href="{{ url_for('admin_properties') }}">← Back to Properties</a>
+</body>
+</html>
