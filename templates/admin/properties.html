@@ -97,7 +97,7 @@
 
     <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
     <script>
-    fetch('https://admin.greataccessholidays.com/api/properties')
+    fetch("https://admin-greataccessholidays.onrender.com/api/properties")
       .then(res => res.json())
       .then(data => {
         const container = document.getElementById("propertyList");
@@ -111,7 +111,10 @@
           div.setAttribute("data-state", p.state);
           div.setAttribute("data-beds", p.bedrooms);
 
-          const slides = p.images.map(img => `<div class='swiper-slide'><img src='https://admin.greataccessholidays.com/static/uploads/${img}' style='width:100%;border-radius:6px;'/></div>`).join("");
+          const slides = p.images.map(img => 
+  `<div class='swiper-slide'><img src='https://admin-greataccessholidays.onrender.com/static/uploads/${img}' style='width:100%;border-radius:6px;'/></div>`
+).join("");
+
 
 
           div.innerHTML = `

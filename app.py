@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
 from functools import wraps
-import mysql.connector
+import psycopg2
+import psycopg2.extras
 import os
 
 app = Flask(__name__)
@@ -24,11 +25,9 @@ def login_required(f):
 
 # Reusable DB connection
 def get_db_connection():
-    return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='Krunal@4532',
-        database='greataccess_db'
+    return psycopg2.connect(
+        dsn=os.environ['DATABASE_URL'],
+        cursor_factory=psycopg2.extras.RealDictCursor
     )
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -37,7 +36,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
         cursor.close()
@@ -73,7 +72,7 @@ def admin_dashboard():
 @login_required
 def admin_properties():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM properties")
     properties = cursor.fetchall()
     for prop in properties:
@@ -86,7 +85,7 @@ def admin_properties():
 @app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
 def toggle_visibility(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT visible FROM properties WHERE id = %s", (property_id,))
     current = cursor.fetchone()
     new_value = not current['visible']
@@ -136,7 +135,7 @@ def add_property():
 @app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
 def edit_property(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
 
     if request.method == 'POST':
         state = request.form['state']
@@ -181,7 +180,7 @@ def edit_property(property_id):
 @app.route('/admin/delete_property/<int:property_id>')
 def delete_property(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT image_filename FROM property_images WHERE property_id=%s", (property_id,))
     images = cursor.fetchall()
     for img in images:
@@ -198,7 +197,7 @@ def delete_property(property_id):
 @app.route('/admin/delete_image/<int:image_id>/<int:property_id>')
 def delete_image(image_id, property_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT image_filename FROM property_images WHERE id=%s", (image_id,))
     img = cursor.fetchone()
     try:
@@ -225,7 +224,7 @@ def view_destinations():
     password='Krunal@4532',  # Replace with your actual password
     database='greataccess_db'  # Replace with your database name
 )
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM destinations")
     destinations = cursor.fetchall()
     cursor.close()
@@ -261,7 +260,7 @@ def add_destination():
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
 def edit_destination(id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
 
     if request.method == 'POST':
         name = request.form['name']
@@ -325,7 +324,7 @@ def toggle_destination_visibility(id):
 @login_required
 def view_cruises():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM cruises")
     cruises = cursor.fetchall()
     cursor.close()
@@ -361,7 +360,7 @@ def add_cruise():
 @login_required
 def edit_cruise(id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
 
     if request.method == 'POST':
         name = request.form['name']
