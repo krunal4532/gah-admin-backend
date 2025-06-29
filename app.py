@@ -43,10 +43,10 @@ def login():
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
-        print("Fetched user:", user)
 
-        if user:
-            print("Hash check:", check_password_hash(user['password_hash'], password))
+        # ✅ Add debug info after fetching user
+        print("DB username:", user['username'] if user else None)
+        print("Hash matches:", check_password_hash(user['password_hash'], password) if user else None)
 
         cursor.close()
         conn.close()
