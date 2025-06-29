@@ -35,10 +35,19 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
+        print("Form username:", username)
+        print("Form password:", password)
+
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
+        print("Fetched user:", user)
+
+        if user:
+            print("Hash check:", check_password_hash(user['password_hash'], password))
+
         cursor.close()
         conn.close()
 
@@ -47,11 +56,7 @@ def login():
             session['username'] = user['username']
             return redirect('/admin/dashboard')
         else:
-            flash('Invalid username or password.')
-            print("Form username:", username)
-            print("DB username:", user['username'] if user else None)
-            print("Hash matches:", check_password_hash(user['password_hash'], password) if user else None)
-
+            flash("Invalid username or password.")
     return render_template('login.html')
 
 @app.route('/')
