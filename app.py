@@ -26,9 +26,15 @@ def login_required(f):
 # Reusable DB connection
 def get_db_connection():
     return psycopg2.connect(
-        dsn=os.environ['DATABASE_URL'],
-        cursor_factory=psycopg2.extras.RealDictCursor
+        host="your_host",
+        database="your_db",
+        user="admin",
+        password="admin123",
+        port=5432,
+        sslmode="require",
+        cursor_factory=psycopg2.extras.RealDictCursor  # ✅ Add this
     )
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
