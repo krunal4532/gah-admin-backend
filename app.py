@@ -24,7 +24,7 @@ def login_required(f):
     return decorated_function
 
 # Reusable DB connection
-ddef get_db_connection():
+def get_db_connection():
     return psycopg2.connect(
         host="ep-broad-fire-a835b705-pooler.eastus2.azure.neon.tech",
         database="neondb",
