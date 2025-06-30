@@ -24,15 +24,15 @@ def login_required(f):
     return decorated_function
 
 # Reusable DB connection
-def get_db_connection():
+ddef get_db_connection():
     return psycopg2.connect(
-        host="your_host",
-        database="your_db",
-        user="admin",
-        password="admin123",
+        host="ep-broad-fire-a835b705-pooler.eastus2.azure.neon.tech",
+        database="neondb",
+        user="neondb_owner",
+        password="npg_lDweJZ2MfP5S",
         port=5432,
         sslmode="require",
-        cursor_factory=psycopg2.extras.RealDictCursor  # ✅ Add this
+        cursor_factory=psycopg2.extras.RealDictCursor
     )
 
 
