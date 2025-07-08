@@ -47,7 +47,7 @@ def login():
         print("Form password:", password)
 
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
 
@@ -84,7 +84,7 @@ def admin_dashboard():
 @login_required
 def admin_properties():
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM properties")
     properties = cursor.fetchall()
     for prop in properties:
@@ -97,7 +97,7 @@ cursor = conn.cursor(dictionary=True)
 @app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
 def toggle_visibility(property_id):
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT visible FROM properties WHERE id = %s", (property_id,))
     current = cursor.fetchone()
     new_value = not current['visible']
@@ -116,8 +116,8 @@ def add_property():
         bedrooms = request.form['bedrooms']
         visible = 'visible' in request.form
 
-       conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             INSERT INTO properties (state, location, name, bedrooms, visible)
             VALUES (%s, %s, %s, %s, %s)
@@ -147,7 +147,7 @@ cursor = conn.cursor(dictionary=True)
 @app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
 def edit_property(property_id):
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
         state = request.form['state']
@@ -192,7 +192,7 @@ cursor = conn.cursor(dictionary=True)
 @app.route('/admin/delete_property/<int:property_id>')
 def delete_property(property_id):
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT image_filename FROM property_images WHERE property_id=%s", (property_id,))
     images = cursor.fetchall()
     for img in images:
@@ -209,7 +209,7 @@ cursor = conn.cursor(dictionary=True)
 @app.route('/admin/delete_image/<int:image_id>/<int:property_id>')
 def delete_image(image_id, property_id):
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT image_filename FROM property_images WHERE id=%s", (image_id,))
     img = cursor.fetchone()
     try:
@@ -272,7 +272,7 @@ def add_destination():
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
 def edit_destination(id):
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
         name = request.form['name']
@@ -336,7 +336,7 @@ def toggle_destination_visibility(id):
 @login_required
 def view_cruises():
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM cruises")  # Or maybe WHERE visible = TRUE
     cruises = cursor.fetchall()
     cursor.close()
@@ -372,7 +372,7 @@ def add_cruise():
 @login_required
 def edit_cruise(id):
     conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
         name = request.form['name']
@@ -430,8 +430,8 @@ def toggle_cruise_visibility(id):
 # API: Properties
 @app.route('/api/properties')
 def api_properties():
-   conn = get_db_connection()
-cursor = conn.cursor(dictionary=True)
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM properties WHERE visible = TRUE")
     properties = cursor.fetchall()
     cursor.close()
@@ -441,7 +441,7 @@ cursor = conn.cursor(dictionary=True)
 # API: Destinations
 @app.route('/admin/destinations')
 @login_required
-def view_destinations():
+def api_destinations():
     conn = get_db_connection()  # ✅ use your new unified method
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM destinations")
