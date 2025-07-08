@@ -76,7 +76,7 @@ def admin_properties():
     properties = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin_properties.html', properties=properties)
+    return render_template("admin/admin_properties.html", properties=properties)
 
 @app.route('/admin/properties/add', methods=['GET', 'POST'])
 @login_required
