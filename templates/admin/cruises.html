@@ -19,13 +19,20 @@
     <h1>Cruises</h1>
     <a href="{{ url_for('add_cruise') }}">Add New Cruise</a>
     <table>
+	<tr>
+    <th>Name</th>
+    <th>Short Description</th>
+    <th>Image</th>
+    <th>Visible</th>
+    <th>Actions</th>
+</tr>
       {% for c in cruises %}
 <tr>
     <td>{{ c.name }}</td>
     <td>{{ c.short_description }}</td>
     <td>
         {% if c.image_filename %}
-        <img src='https://admin.greataccessholidays.com/static/uploads/${c.image_filename}' ... />
+        <img src="https://admin.greataccessholidays.com/static/uploads/{{ c.image_filename }}" width="100">
         {% endif %}
     </td>
     <td>

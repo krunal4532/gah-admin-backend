@@ -1,21 +1,25 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, session, flash
-from werkzeug.utils import secure_filename
-from werkzeug.security import check_password_hash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
+from werkzeug.security import check_password_hash
 import psycopg2
 import psycopg2.extras
 import os
-import mysql.connector
 
 app = Flask(__name__)
-app.secret_key = 'GAH@LWR2025'
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = os.environ.get("SECRET_KEY", "defaultsecretkey")
 
-# Create uploads folder if it doesn't exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# --- DB Connection ---
+def get_db_connection():
+    return psycopg2.connect(
+        host=os.environ.get("DB_HOST"),
+        database=os.environ.get("DB_NAME"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        sslmode="require",
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
 
-# Login required decorator
+# --- Login Required Decorator ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -24,18 +28,9 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Reusable DB connection
-def get_db_connection():
-    return psycopg2.connect(
-        host="ep-broad-fire-a835b705-pooler.eastus2.azure.neon.tech",
-        database="neondb",
-        user="neondb_owner",
-        password="npg_lDweJZ2MfP5S",
-        port=5432,
-        sslmode="require",
-        cursor_factory=psycopg2.extras.RealDictCursor
-    )
-
+@app.route('/')
+def home():
+    return redirect(url_for('admin_properties'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -43,18 +38,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        print("Form username:", username)
-        print("Form password:", password)
-
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
-
-        # ✅ Add debug info after fetching user
-        print("DB username:", user['username'] if user else None)
-        print("Hash matches:", check_password_hash(user['password_hash'], password) if user else None)
-
         cursor.close()
         conn.close()
 
@@ -66,10 +53,6 @@ def login():
             flash("Invalid username or password.")
     return render_template('login.html')
 
-@app.route('/')
-def home():
-    return redirect(url_for('admin_properties'))
-
 @app.route('/logout')
 def logout():
     session.clear()
@@ -78,77 +61,22 @@ def logout():
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    return render_template('admin/dashboard.html')
+    return render_template('dashboard.html')
 
 @app.route('/admin/properties')
 @login_required
 def admin_properties():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM properties")
     properties = cursor.fetchall()
-    for prop in properties:
-        cursor.execute("SELECT image_filename FROM property_images WHERE property_id = %s", (prop['id'],))
-        prop['images'] = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin/properties.html', properties=properties)
-
-@app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
-def toggle_visibility(property_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT visible FROM properties WHERE id = %s", (property_id,))
-    current = cursor.fetchone()
-    new_value = not current['visible']
-    cursor.execute("UPDATE properties SET visible = %s WHERE id = %s", (new_value, property_id))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('admin_properties'))
+    return render_template('admin_properties.html', properties=properties)
 
 @app.route('/admin/properties/add', methods=['GET', 'POST'])
+@login_required
 def add_property():
-    if request.method == 'POST':
-        state = request.form['state']
-        location = request.form['location']
-        name = request.form['name']
-        bedrooms = request.form['bedrooms']
-        visible = 'visible' in request.form
-
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("""
-            INSERT INTO properties (state, location, name, bedrooms, visible)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (state, location, name, bedrooms, visible))
-        property_id = cursor.lastrowid
-
-        images = request.files.getlist('images')
-        for image in images:
-            if image.filename != '':
-                filename = secure_filename(image.filename)
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                cursor.execute("""
-    UPDATE properties 
-    SET state=%s, location=%s, name=%s, bedrooms=%s, guests=%s, beds=%s, baths=%s, price=%s, short_description=%s, visible=%s 
-    WHERE id=%s
-""", (state, location, name, bedrooms, guests, beds, baths, price, short_description, visible, property_id))
-
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-        flash("Property added successfully!")
-        return redirect(url_for('admin_properties'))
-
-    return render_template('admin/add_property.html')
-
-@app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
-def edit_property(property_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
     if request.method == 'POST':
         state = request.form['state']
         location = request.form['location']
@@ -157,95 +85,79 @@ def edit_property(property_id):
         guests = request.form['guests']
         beds = request.form['beds']
         baths = request.form['baths']
-        price_per_night = request.form['price_per_night']
+        price = request.form['price']
         short_description = request.form['short_description']
         visible = 'visible' in request.form
 
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute("""
-            UPDATE properties 
-            SET state=%s, location=%s, name=%s, bedrooms=%s, guests=%s, beds=%s, baths=%s,
-                price_per_night=%s, short_description=%s, visible=%s
-            WHERE id=%s
-        """, (state, location, name, bedrooms, guests, beds, baths, price_per_night, short_description, visible, property_id))
-
-        # Handle new image uploads
-        images = request.files.getlist('images')
-        for image in images:
-            if image.filename:
-                filename = secure_filename(image.filename)
-                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                cursor.execute("INSERT INTO property_images (property_id, image_filename) VALUES (%s, %s)", (property_id, filename))
-
+            INSERT INTO properties (state, location, name, bedrooms, guests, beds, baths, price_per_night, short_description, visible)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (state, location, name, bedrooms, guests, beds, baths, price, short_description, visible))
         conn.commit()
         cursor.close()
         conn.close()
         return redirect(url_for('admin_properties'))
+    return render_template('add_property.html')
 
-    cursor.execute("SELECT * FROM properties WHERE id=%s", (property_id,))
-    property_data = cursor.fetchone()
-    cursor.execute("SELECT * FROM property_images WHERE property_id=%s", (property_id,))
-    images = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('admin/edit_property.html', property=property_data, images=images)
+@app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
+@login_required
+def edit_property(property_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        state = request.form['state']
+        location = request.form['location']
+        name = request.form['name']
+        bedrooms = request.form['bedrooms']
+        guests = request.form['guests']
+        beds = request.form['beds']
+        baths = request.form['baths']
+        price = request.form['price']
+        short_description = request.form['short_description']
+        visible = 'visible' in request.form
+
+        cursor.execute("""
+            UPDATE properties SET state=%s, location=%s, name=%s, bedrooms=%s,
+            guests=%s, beds=%s, baths=%s, price_per_night=%s, short_description=%s, visible=%s
+            WHERE id=%s
+        """, (state, location, name, bedrooms, guests, beds, baths, price, short_description, visible, property_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return redirect(url_for('admin_properties'))
+    else:
+        cursor.execute("SELECT * FROM properties WHERE id = %s", (property_id,))
+        prop = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return render_template('edit_property.html', prop=prop)
 
 @app.route('/admin/delete_property/<int:property_id>')
+@login_required
 def delete_property(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT image_filename FROM property_images WHERE property_id=%s", (property_id,))
-    images = cursor.fetchall()
-    for img in images:
-        try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], img['image_filename']))
-        except:
-            pass
-    cursor.execute("DELETE FROM properties WHERE id=%s", (property_id,))
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM properties WHERE id = %s", (property_id,))
     conn.commit()
     cursor.close()
     conn.close()
     return redirect(url_for('admin_properties'))
 
-@app.route('/admin/delete_image/<int:image_id>/<int:property_id>')
-def delete_image(image_id, property_id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT image_filename FROM property_images WHERE id=%s", (image_id,))
-    img = cursor.fetchone()
-    try:
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], img['image_filename']))
-    except:
-        pass
-    cursor.execute("DELETE FROM property_images WHERE id=%s", (image_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('edit_property', property_id=property_id))
-
-# Other routes (destinations, cruises, APIs) should also be updated to use get_db_connection() the same way.
-# Let me know if you'd like me to continue with those.
-
-
-# View all destinations
 @app.route('/admin/destinations')
 @login_required
 def view_destinations():
-    conn = mysql.connector.connect(
-    host='localhost',
-    user='root',
-    password='Krunal@4532',  # Replace with your actual password
-    database='greataccess_db'  # Replace with your database name
-)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM destinations")
     destinations = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin/destinations.html', destinations=destinations)
+    return render_template('admin_destinations.html', destinations=destinations)
 
-
-# Add destination
 @app.route('/admin/destinations/add', methods=['GET', 'POST'])
+@login_required
 def add_destination():
     if request.method == 'POST':
         name = request.form['name']
@@ -253,214 +165,119 @@ def add_destination():
         more_info = request.form['more_info']
         visible = 'visible' in request.form
 
-        image = request.files['image']
-        filename = None
-        if image and image.filename:
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute("""
-    INSERT INTO destinations (name, description, image_filename, visible, more_info)
-    VALUES (%s, %s, %s, %s, %s)
-""", (name, description, filename, visible, more_info))
+            INSERT INTO destinations (name, description, more_info, visible)
+            VALUES (%s, %s, %s, %s)
+        """, (name, description, more_info, visible))
         conn.commit()
+        cursor.close()
+        conn.close()
         return redirect(url_for('view_destinations'))
+    return render_template('add_destination.html')
 
-    return render_template('admin/add_destination.html')
-
-# Edit destination
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_destination(id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
+    cursor = conn.cursor()
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
         more_info = request.form['more_info']
         visible = 'visible' in request.form
 
-        image = request.files['image']
-        if image and image.filename:
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            cursor.execute("UPDATE destinations SET image_filename=%s WHERE id=%s", (filename, id))
         cursor.execute("""
-            UPDATE destinations
-            SET name=%s, description=%s, more_info=%s, visible=%s
-            WHERE id=%s
+            UPDATE destinations SET name=%s, description=%s, more_info=%s, visible=%s WHERE id=%s
         """, (name, description, more_info, visible, id))
         conn.commit()
         cursor.close()
         conn.close()
         return redirect(url_for('view_destinations'))
+    else:
+        cursor.execute("SELECT * FROM destinations WHERE id = %s", (id,))
+        dest = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return render_template('edit_destination.html', dest=dest)
 
-    cursor.execute("SELECT * FROM destinations WHERE id=%s", (id,))
-    destination = cursor.fetchone()
+@app.route('/admin/destinations/delete/<int:id>')
+@login_required
+def delete_destination(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM destinations WHERE id = %s", (id,))
+    conn.commit()
     cursor.close()
     conn.close()
-    return render_template('admin/edit_destination.html', destination=destination)
-
-
-    cursor.execute("SELECT * FROM destinations WHERE id=%s", (id,))
-    destination = cursor.fetchone()
-    return render_template('admin/edit_destination.html', destination=destination)
-
-# Delete destination
-@app.route('/admin/destinations/delete/<int:id>')
-def delete_destination(id):
-    cursor.execute("SELECT image_filename FROM destinations WHERE id=%s", (id,))
-    image = cursor.fetchone()
-    if image and image['image_filename']:
-        try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image['image_filename']))
-        except:
-            pass
-
-    cursor.execute("DELETE FROM destinations WHERE id=%s", (id,))
-    conn.commit()
     return redirect(url_for('view_destinations'))
 
-# Toggle visibility
-@app.route('/admin/destinations/toggle/<int:id>', methods=['POST'])
-def toggle_destination_visibility(id):
-    cursor.execute("SELECT visible FROM destinations WHERE id=%s", (id,))
-    current = cursor.fetchone()
-    new_value = not current['visible']
-    cursor.execute("UPDATE destinations SET visible = %s WHERE id = %s", (new_value, id))
-    conn.commit()
-    return redirect(url_for('view_destinations'))
-    
-    # View all cruises
 @app.route('/admin/cruises')
 @login_required
 def view_cruises():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM cruises")  # Or maybe WHERE visible = TRUE
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM cruises")
     cruises = cursor.fetchall()
     cursor.close()
     conn.close()
-    print("Cruises data:", cruises)
-    return render_template('cruises.html', cruises=cruises)
+    return render_template('admin_cruises.html', cruises=cruises)
 
-# Add cruise
 @app.route('/admin/cruises/add', methods=['GET', 'POST'])
+@login_required
 def add_cruise():
     if request.method == 'POST':
         name = request.form['name']
-        description = request.form['description']
+        short_description = request.form['short_description']
         visible = 'visible' in request.form
 
-        image = request.files['image']
-        filename = None
-        if image and image.filename:
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO cruises (name, description, image_filename, visible)
-            VALUES (%s, %s, %s, %s)
-        """, (name, description, filename, visible))
-        conn.commit()
-        return redirect(url_for('view_cruises'))
-
-    return render_template('admin/add_cruise.html')
-
-# Edit cruise
-@app.route('/admin/cruises/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
-def edit_cruise(id):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        visible = 'visible' in request.form
-
-        image = request.files['image']
-        if image and image.filename:
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            cursor.execute("UPDATE cruises SET image_filename=%s WHERE id=%s", (filename, id))
-
-        cursor.execute("""
-            UPDATE cruises
-            SET name=%s, description=%s, visible=%s
-            WHERE id=%s
-        """, (name, description, visible, id))
+            INSERT INTO cruises (name, short_description, visible)
+            VALUES (%s, %s, %s)
+        """, (name, short_description, visible))
         conn.commit()
         cursor.close()
         conn.close()
         return redirect(url_for('view_cruises'))
+    return render_template('add_cruise.html')
 
-    cursor.execute("SELECT * FROM cruises WHERE id=%s", (id,))
-    cruise = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return render_template('admin/edit_cruise.html', cruise=cruise)
-
-
-# Delete cruise
-@app.route('/admin/cruises/delete/<int:id>')
-def delete_cruise(id):
-    cursor.execute("SELECT image_filename FROM cruises WHERE id=%s", (id,))
-    image = cursor.fetchone()
-    if image and image['image_filename']:
-        try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], image['image_filename']))
-        except:
-            pass
-
-    cursor.execute("DELETE FROM cruises WHERE id=%s", (id,))
-    conn.commit()
-    return redirect(url_for('view_cruises'))
-
-# Toggle visibility
-@app.route('/admin/cruises/toggle/<int:id>', methods=['POST'])
-def toggle_cruise_visibility(id):
-    cursor.execute("SELECT visible FROM cruises WHERE id=%s", (id,))
-    current = cursor.fetchone()
-    new_value = not current['visible']
-    cursor.execute("UPDATE cruises SET visible = %s WHERE id = %s", (new_value, id))
-    conn.commit()
-    return redirect(url_for('view_cruises'))
-
-# API: Properties
-@app.route('/api/properties')
-def api_properties():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM properties WHERE visible = TRUE")
-    properties = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(properties)
-
-# API: Destinations
-@app.route('/admin/destinations')
+@app.route('/admin/cruises/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-def api_destinations():
-    conn = get_db_connection()  # ✅ use your new unified method
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM destinations")
-    destinations = cursor.fetchall()
+def edit_cruise(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        name = request.form['name']
+        short_description = request.form['short_description']
+        visible = 'visible' in request.form
+
+        cursor.execute("""
+            UPDATE cruises SET name=%s, short_description=%s, visible=%s WHERE id=%s
+        """, (name, short_description, visible, id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return redirect(url_for('view_cruises'))
+    else:
+        cursor.execute("SELECT * FROM cruises WHERE id = %s", (id,))
+        cruise = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return render_template('edit_cruise.html', cruise=cruise)
+
+@app.route('/admin/cruises/delete/<int:id>')
+@login_required
+def delete_cruise(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM cruises WHERE id = %s", (id,))
+    conn.commit()
     cursor.close()
     conn.close()
-    return render_template('destinations.html', destinations=destinations)
+    return redirect(url_for('view_cruises'))
 
-# API: Cruises
-@app.route('/api/cruises')
-def api_cruises():
-    cursor.execute("SELECT * FROM cruises WHERE visible = TRUE")
-    return jsonify(cursor.fetchall())
-    
-print("Registered routes:")
-print(app.url_map)
-
-# This file is served by Gunicorn when deployed on Render
-# Don't run the app directly here in production
-
-    
-    
+if __name__ == '__main__':
+    app.run(debug=True)
