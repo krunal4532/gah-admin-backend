@@ -5,6 +5,7 @@ from functools import wraps
 import psycopg2
 import psycopg2.extras
 import os
+import mysql.connector
 
 app = Flask(__name__)
 app.secret_key = 'GAH@LWR2025'
@@ -83,7 +84,7 @@ def admin_dashboard():
 @login_required
 def admin_properties():
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM properties")
     properties = cursor.fetchall()
     for prop in properties:
@@ -96,7 +97,7 @@ def admin_properties():
 @app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
 def toggle_visibility(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT visible FROM properties WHERE id = %s", (property_id,))
     current = cursor.fetchone()
     new_value = not current['visible']
@@ -115,8 +116,8 @@ def add_property():
         bedrooms = request.form['bedrooms']
         visible = 'visible' in request.form
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
+       conn = get_db_connection()
+cursor = conn.cursor(dictionary=True)
         cursor.execute("""
             INSERT INTO properties (state, location, name, bedrooms, visible)
             VALUES (%s, %s, %s, %s, %s)
@@ -146,7 +147,7 @@ def add_property():
 @app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
 def edit_property(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
         state = request.form['state']
@@ -191,7 +192,7 @@ def edit_property(property_id):
 @app.route('/admin/delete_property/<int:property_id>')
 def delete_property(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT image_filename FROM property_images WHERE property_id=%s", (property_id,))
     images = cursor.fetchall()
     for img in images:
@@ -208,7 +209,7 @@ def delete_property(property_id):
 @app.route('/admin/delete_image/<int:image_id>/<int:property_id>')
 def delete_image(image_id, property_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT image_filename FROM property_images WHERE id=%s", (image_id,))
     img = cursor.fetchone()
     try:
@@ -271,7 +272,7 @@ def add_destination():
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
 def edit_destination(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
         name = request.form['name']
@@ -335,13 +336,13 @@ def toggle_destination_visibility(id):
 @login_required
 def view_cruises():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM cruises")
+cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM cruises")  # Or maybe WHERE visible = TRUE
     cruises = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin/cruises.html', cruises=cruises)
-
+    print("Cruises data:", cruises)
+    return render_template('cruises.html', cruises=cruises)
 
 # Add cruise
 @app.route('/admin/cruises/add', methods=['GET', 'POST'])
@@ -371,7 +372,7 @@ def add_cruise():
 @login_required
 def edit_cruise(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+cursor = conn.cursor(dictionary=True)
 
     if request.method == 'POST':
         name = request.form['name']
@@ -429,18 +430,25 @@ def toggle_cruise_visibility(id):
 # API: Properties
 @app.route('/api/properties')
 def api_properties():
+   conn = get_db_connection()
+cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM properties WHERE visible = TRUE")
     properties = cursor.fetchall()
-    for prop in properties:
-        cursor.execute("SELECT image_filename FROM property_images WHERE property_id = %s", (prop['id'],))
-        prop['images'] = [img['image_filename'] for img in cursor.fetchall()]
+    cursor.close()
+    conn.close()
     return jsonify(properties)
 
 # API: Destinations
-@app.route('/api/destinations')
-def api_destinations():
-    cursor.execute("SELECT * FROM destinations WHERE visible = TRUE")
-    return jsonify(cursor.fetchall())
+@app.route('/admin/destinations')
+@login_required
+def view_destinations():
+    conn = get_db_connection()  # ✅ use your new unified method
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM destinations")
+    destinations = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('destinations.html', destinations=destinations)
 
 # API: Cruises
 @app.route('/api/cruises')
