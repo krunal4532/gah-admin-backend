@@ -158,7 +158,7 @@ def view_destinations():
     destinations = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin_destinations.html', destinations=destinations)
+    return render_template('admin/destinations.html', destinations=destinations)
 
 @app.route('/admin/destinations/add', methods=['GET', 'POST'])
 @login_required
