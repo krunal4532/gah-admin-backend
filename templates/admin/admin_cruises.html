@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cruises</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+                  background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px;
+                         bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body>
+    <h1>Cruises</h1>
+    <a href="{{ url_for('add_cruise') }}">Add New Cruise</a>
+    <table>
+	<tr>
+    <th>Name</th>
+    <th>Short Description</th>
+    <th>Image</th>
+    <th>Visible</th>
+    <th>Actions</th>
+</tr>
+      {% for c in cruises %}
+<tr>
+    <td>{{ c.name }}</td>
+    <td>{{ c.short_description }}</td>
+    <td>
+        {% if c.image_filename %}
+        <img src="https://admin.greataccessholidays.com/static/uploads/{{ c.image_filename }}" width="100">
+        {% endif %}
+    </td>
+    <td>
+        <form action="{{ url_for('toggle_cruise_visibility', id=c.id) }}" method="POST">
+            <label class="switch">
+                <input type="checkbox" onchange="this.form.submit()" {% if c.visible %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </form>
+    </td>
+    <td>
+        <a href="{{ url_for('edit_cruise', id=c.id) }}">Edit</a> |
+        <a href="{{ url_for('delete_cruise', id=c.id) }}" onclick="return confirm('Delete this cruise?')">Delete</a>
+    </td>
+</tr>
+{% endfor %}
+
+    </table>
+</body>
+</html>
