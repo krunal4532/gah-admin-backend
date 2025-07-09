@@ -137,8 +137,8 @@ def edit_property(property_id):
         cursor.close()
         conn.close()
         return render_template('admin/edit_property.html', prop=prop)
-		
-		@app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
+        
+@app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
 @login_required
 def toggle_visibility(property_id):
     conn = get_db_connection()
