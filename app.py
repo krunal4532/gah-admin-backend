@@ -137,6 +137,27 @@ def edit_property(property_id):
         cursor.close()
         conn.close()
         return render_template('admin/edit_property.html', prop=prop)
+		
+		@app.route('/admin/properties/<int:property_id>/toggle', methods=['POST'])
+@login_required
+def toggle_visibility(property_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Fetch current visibility
+    cursor.execute("SELECT visible FROM properties WHERE id = %s", (property_id,))
+    result = cursor.fetchone()
+
+    if result:
+        current_visibility = result[0]
+        new_visibility = not current_visibility
+        cursor.execute("UPDATE properties SET visible = %s WHERE id = %s", (new_visibility, property_id))
+        conn.commit()
+
+    cursor.close()
+    conn.close()
+    return redirect(url_for('admin/admin_properties'))
+
 
 @app.route('/admin/delete_property/<int:property_id>')
 @login_required
