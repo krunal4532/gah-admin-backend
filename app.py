@@ -102,8 +102,8 @@ def add_property():
         conn.commit()
         cursor.close()
         conn.close()
-        return redirect(url_for('admin_properties'))
-    return render_template('add_property.html')
+        return redirect(url_for('admin/admin_properties'))
+    return render_template('admin/add_property.html')
 
 @app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
 @login_required
@@ -136,7 +136,7 @@ def edit_property(property_id):
         prop = cursor.fetchone()
         cursor.close()
         conn.close()
-        return render_template('edit_property.html', prop=prop)
+        return render_template('admin/edit_property.html', prop=prop)
 
 @app.route('/admin/delete_property/<int:property_id>')
 @login_required
@@ -147,7 +147,7 @@ def delete_property(property_id):
     conn.commit()
     cursor.close()
     conn.close()
-    return redirect(url_for('admin_properties'))
+    return redirect(url_for('admin/admin_properties'))
 
 @app.route('/admin/destinations')
 @login_required
@@ -179,7 +179,7 @@ def add_destination():
         cursor.close()
         conn.close()
         return redirect(url_for('view_destinations'))
-    return render_template('add_destination.html')
+    return render_template('admin/add_destination.html')
 
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -204,7 +204,7 @@ def edit_destination(id):
         dest = cursor.fetchone()
         cursor.close()
         conn.close()
-        return render_template('edit_destination.html', dest=dest)
+        return render_template('admin/edit_destination.html', dest=dest)
 
 @app.route('/admin/destinations/delete/<int:id>')
 @login_required
@@ -215,7 +215,7 @@ def delete_destination(id):
     conn.commit()
     cursor.close()
     conn.close()
-    return redirect(url_for('view_destinations'))
+    return redirect(url_for('admin/view_destinations'))
 
 @app.route('/admin/cruises')
 @login_required
@@ -226,7 +226,7 @@ def view_cruises():
     cruises = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template('admin_cruises.html', cruises=cruises)
+    return render_template('admin/admin_cruises.html', cruises=cruises)
 
 @app.route('/admin/cruises/add', methods=['GET', 'POST'])
 @login_required
@@ -246,7 +246,7 @@ def add_cruise():
         cursor.close()
         conn.close()
         return redirect(url_for('view_cruises'))
-    return render_template('add_cruise.html')
+    return render_template('admin/add_cruise.html')
 
 @app.route('/admin/cruises/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -264,13 +264,13 @@ def edit_cruise(id):
         conn.commit()
         cursor.close()
         conn.close()
-        return redirect(url_for('view_cruises'))
+        return redirect(url_for('admin/view_cruises'))
     else:
         cursor.execute("SELECT * FROM cruises WHERE id = %s", (id,))
         cruise = cursor.fetchone()
         cursor.close()
         conn.close()
-        return render_template('edit_cruise.html', cruise=cruise)
+        return render_template('admin/edit_cruise.html', cruise=cruise)
 
 @app.route('/admin/cruises/delete/<int:id>')
 @login_required
@@ -281,7 +281,7 @@ def delete_cruise(id):
     conn.commit()
     cursor.close()
     conn.close()
-    return redirect(url_for('view_cruises'))
+    return redirect(url_for('admin/view_cruises'))
 
 if __name__ == '__main__':
     app.run(debug=True)
