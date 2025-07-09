@@ -1,4 +1,3 @@
-
 <!-- templates/admin/add_property.html -->
 <!DOCTYPE html>
 <html lang="en">
@@ -9,12 +8,18 @@
 <body>
     <h1>Add New Property</h1>
     <form action="{{ url_for('add_property') }}" method="post" enctype="multipart/form-data">
-        <label>State: <input type="text" name="state"></label><br>
-        <label>Location: <input type="text" name="location"></label><br>
-        <label>Name: <input type="text" name="name"></label><br>
-        <label>Bedrooms: <input type="number" name="bedrooms"></label><br>
+        <label>State: <input type="text" name="state" required></label><br>
+        <label>Location: <input type="text" name="location" required></label><br>
+        <label>Name: <input type="text" name="name" required></label><br>
+        <label>Bedrooms: <input type="number" name="bedrooms" required></label><br>
+        <label>Guests: <input type="number" name="guests" required></label><br>
+        <label>Beds: <input type="number" name="beds" required></label><br>
+        <label>Baths: <input type="number" name="baths" required></label><br>
+        <label>Price/Night: <input type="number" name="price_per_night" step="0.01" required></label><br>
+        <label>Short Description: <input type="text" name="short_description" maxlength="255"></label><br>
         <label>Visible: <input type="checkbox" name="visible" value="1" checked></label><br>
-        <label>Images: <input type="file" name="images" multiple></label><br><br>
+        <label>Images: <input type="file" name="images" multiple required></label><br><br>
+
         <input type="submit" value="Add Property">
     </form>
 </body>
