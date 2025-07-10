@@ -162,22 +162,23 @@ def edit_property(property_id):
 @login_required
 def toggle_visibility(property_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # Fetch current visibility
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
     cursor.execute("SELECT visible FROM properties WHERE id = %s", (property_id,))
     result = cursor.fetchone()
 
-    if result:
-        current_visibility = result[0]
-        new_visibility = not current_visibility
-        cursor.execute("UPDATE properties SET visible = %s WHERE id = %s", (new_visibility, property_id))
-        conn.commit()
+    if result is None:
+        flash("Property not found.", "error")
+        return redirect(url_for("admin_properties"))
 
-    cursor.close()
-    conn.close()
-    return redirect(url_for('admin/admin_properties'))
+    current_visibility = result["visible"]
+    new_visibility = not current_visibility
 
+    cursor.execute("UPDATE properties SET visible = %s WHERE id = %s", (new_visibility, property_id))
+    conn.commit()
+
+    flash("Visibility updated.", "success")
+    return redirect(url_for("admin_properties"))
 
 @app.route('/admin/delete_property/<int:property_id>')
 @login_required
