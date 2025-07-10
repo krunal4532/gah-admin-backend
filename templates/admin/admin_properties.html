@@ -112,10 +112,10 @@
           div.setAttribute("data-beds", p.bedrooms);
 
           const slides = p.images.map(img => 
-  `<div class='swiper-slide'><img src='https://admin-greataccessholidays.onrender.com/static/uploads/${img}' style='width:100%;border-radius:6px;'/></div>`
+  `<div class='swiper-slide'>
+     <img src='https://admin-greataccessholidays.onrender.com/static/uploads/${img.image_filename}' style='width:100%;border-radius:6px;'/>
+   </div>`
 ).join("");
-
-
 
           div.innerHTML = `
             <div class="swiper" style="width: 100%; max-width: 300px;">

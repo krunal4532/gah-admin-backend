@@ -4,9 +4,28 @@ from werkzeug.security import check_password_hash
 import psycopg2
 import psycopg2.extras
 import os
+from flask import jsonify
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "defaultsecretkey")
+
+@app.route('/api/properties')
+def api_properties():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("SELECT * FROM properties WHERE visible = TRUE")
+    properties = cursor.fetchall()
+
+    for prop in properties:
+        cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
+        images = cursor.fetchall()
+        prop['images'] = images  # [{'image_filename': 'img1.jpg'}, ...]
+
+    cursor.close()
+    conn.close()
+    return jsonify(properties)
 
 # --- DB Connection ---
 def get_db_connection():
@@ -16,10 +35,11 @@ def get_db_connection():
 
     return psycopg2.connect(
         host=os.environ.get("DB_HOST"),
+        port=5432,
         database=os.environ.get("DB_NAME"),
         user=os.environ.get("DB_USER"),
         password=os.environ.get("DB_PASSWORD"),
-        port=os.environ.get("DB_PORT", 5432),
+        sslmode='require',
         cursor_factory=psycopg2.extras.RealDictCursor
     )
 
