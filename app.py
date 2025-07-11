@@ -32,11 +32,13 @@ def api_properties():
         cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
         images = cursor.fetchall()
 
-        # Correct image URLs by replacing 'images/' with 'uploads/'
-        prop['images'] = [
-            url_for('static', filename='uploads/' + img['image_filename'].replace('images/', ''))
-            for img in images if img['image_filename'] and img['image_filename'] != 'undefined'
-        ]
+        prop['images'] = []
+        for img in images:
+            filename = img['image_filename']
+            if filename and filename.lower() != 'undefined':
+                # convert images/prop-1/1.webp → static/uploads/prop-1/1.webp
+                filename = filename.replace("images/", "uploads/")
+                prop['images'].append(url_for('static', filename=filename))
 
     cursor.close()
     conn.close()
