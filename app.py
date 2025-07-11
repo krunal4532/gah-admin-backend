@@ -33,11 +33,13 @@ def api_properties():
         cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
         images = cursor.fetchall()
 
-        # Build image paths correctly
-        prop['images'] = [
-            url_for('static', filename='uploads/' + img['image_filename'].replace("images/", ""))
-            for img in images if 'image_filename' in img and img['image_filename']
-        ]
+        prop['images'] = []
+        for img in images:
+            filename = img['image_filename']
+            if filename and filename != 'undefined':
+                # Fix: Replace 'images/' with 'uploads/' to match your folder
+                filename = filename.replace("images/", "uploads/")
+                prop['images'].append(url_for('static', filename=filename))
 
     cursor.close()
     conn.close()
