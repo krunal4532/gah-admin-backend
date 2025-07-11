@@ -19,19 +19,14 @@ def api_properties():
     properties = cursor.fetchall()
 
     for prop in properties:
-        # Get raw filenames from DB (e.g., uploads/prop-1/1.webp)
         cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
-        image_rows = cursor.fetchall()
-
-        # Prepend /static/ to serve through Flask
-        prop['images'] = [f"/static/{img['image_filename']}" for img in image_rows]
-
-        # Clean up nulls or missing data
-        prop['guests'] = prop.get('guests') or 0
-        prop['beds'] = prop.get('beds') or 0
-        prop['baths'] = prop.get('baths') or 0
-        prop['price_per_night'] = float(prop.get('price_per_night') or 0)
-        prop['short_description'] = prop.get('short_description') or ""
+        images = cursor.fetchall()
+        
+        # Convert: images/prop-1/1.webp → /static/uploads/prop-1/1.webp
+        prop['images'] = [
+            url_for('static', filename='uploads/' + img['image_filename'].split('/')[-2] + '/' + img['image_filename'].split('/')[-1])
+            for img in images
+        ]
 
     cursor.close()
     conn.close()
