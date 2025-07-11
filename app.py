@@ -10,6 +10,17 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "defaultsecretkey")
 
+
+def get_db_connection():
+    return psycopg2.connect(
+        host=os.environ.get("DB_HOST"),
+        database=os.environ.get("DB_NAME"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        port=os.environ.get("DB_PORT", 5432)
+    )
+
+
 @app.route('/api/properties')
 def api_properties():
     conn = get_db_connection()
@@ -21,11 +32,11 @@ def api_properties():
     for prop in properties:
         cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
         images = cursor.fetchall()
-        
-        # Convert: images/prop-1/1.webp → /static/uploads/prop-1/1.webp
+
+        # Build image paths correctly
         prop['images'] = [
-            url_for('static', filename='uploads/' + img['image_filename'].split('/')[-2] + '/' + img['image_filename'].split('/')[-1])
-            for img in images
+            url_for('static', filename='uploads/' + img['image_filename'].replace("images/", ""))
+            for img in images if 'image_filename' in img and img['image_filename']
         ]
 
     cursor.close()
