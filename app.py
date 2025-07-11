@@ -20,7 +20,6 @@ def get_db_connection():
         port=os.environ.get("DB_PORT", 5432)
     )
 
-
 @app.route('/api/properties')
 def api_properties():
     conn = get_db_connection()
@@ -33,13 +32,11 @@ def api_properties():
         cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
         images = cursor.fetchall()
 
-        prop['images'] = []
-        for img in images:
-            filename = img['image_filename']
-            if filename and filename != 'undefined':
-                # Fix: Replace 'images/' with 'uploads/' to match your folder
-                filename = filename.replace("images/", "uploads/")
-                prop['images'].append(url_for('static', filename=filename))
+        # Correct image URLs by replacing 'images/' with 'uploads/'
+        prop['images'] = [
+            url_for('static', filename='uploads/' + img['image_filename'].replace('images/', ''))
+            for img in images if img['image_filename'] and img['image_filename'] != 'undefined'
+        ]
 
     cursor.close()
     conn.close()
