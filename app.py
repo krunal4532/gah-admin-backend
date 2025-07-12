@@ -41,8 +41,9 @@ def api_properties():
         for img in images:
             filename = img['image_filename']
             if filename:
-                # Ensure all image paths are relative to static folder
-                filename = filename.replace("images/", "uploads/")
+                # Strip leading 'static/' if it exists
+                if filename.startswith("static/"):
+                    filename = filename[len("static/"):]
                 prop['images'].append(url_for('static', filename=filename))
 
     cursor.close()
