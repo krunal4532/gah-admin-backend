@@ -35,9 +35,10 @@ def api_properties():
         prop['images'] = []
         for img in images:
             filename = img['image_filename']
-            if filename and filename.lower() != 'undefined':
-                # convert images/prop-1/1.webp → static/uploads/prop-1/1.webp
-                filename = filename.replace("images/", "uploads/")
+            if filename and filename != 'undefined':
+                # ✅ Remove 'static/' prefix before using in url_for('static', filename=...)
+                if filename.startswith("static/"):
+                    filename = filename[len("static/"):]
                 prop['images'].append(url_for('static', filename=filename))
 
     cursor.close()
