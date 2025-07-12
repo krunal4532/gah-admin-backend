@@ -29,16 +29,20 @@ def api_properties():
     properties = cursor.fetchall()
 
     for prop in properties:
-        cursor.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
+        cursor.execute("""
+            SELECT image_filename 
+            FROM images 
+            WHERE property_id = %s 
+            ORDER BY image_filename
+        """, (prop['id'],))
         images = cursor.fetchall()
 
         prop['images'] = []
         for img in images:
             filename = img['image_filename']
-            if filename and filename != 'undefined':
-                # ✅ Remove 'static/' prefix before using in url_for('static', filename=...)
-                if filename.startswith("static/"):
-                    filename = filename[len("static/"):]
+            if filename:
+                # Ensure all image paths are relative to static folder
+                filename = filename.replace("images/", "uploads/")
                 prop['images'].append(url_for('static', filename=filename))
 
     cursor.close()
