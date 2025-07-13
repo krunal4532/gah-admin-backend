@@ -83,7 +83,7 @@
                 </td>
                 <td>
                     {% for image in property.images %}
-                        <img src="{{ url_for('static', filename='uploads/' ~ image.image_filename) }}" width="60">
+                        <img src="{{ url_for('static', filename=image.image_filename) }}" width="60">
                     {% endfor %}
                 </td>
                 <td>
@@ -113,7 +113,7 @@
 
           const slides = p.images.map(img => 
   `<div class='swiper-slide'>
-     <img src='https://admin-greataccessholidays.onrender.com/static/uploads/${img.image_filename}' style='width:100%;border-radius:6px;'/>
+     <img src='https://admin-greataccessholidays.onrender.com/static/${img}' style='width:100%;border-radius:6px;'/>
    </div>`
 ).join("");
 
