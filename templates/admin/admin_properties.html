@@ -6,59 +6,137 @@
   <title>Admin - Properties</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css"/>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }
-    h1 { text-align: center; color: #333; }
-    .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    .property-card { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .property-card h3 { margin: 0 0 10px; font-size: 1.2em; color: #222; }
-    .property-card .swiper { width: 100%; height: 200px; border-radius: 8px; overflow: hidden; }
-    .property-card .swiper-slide img { width: 100%; height: 100%; object-fit: cover; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .controls a {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .property-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .property-card {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .property-card h3 {
+      margin: 10px 0 5px;
+      font-size: 1.1em;
+      color: #222;
+    }
+    .swiper {
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .swiper-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .btn-group {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn-group a, .btn-group form {
+      flex: 1;
+      margin: 0 5px;
+    }
+    .btn-group button, .btn-group a {
+      width: 100%;
+      padding: 8px;
+      font-size: 0.9em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-edit {
+      background-color: #28a745;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #dc3545;
+      color: white;
+    }
   </style>
 </head>
 <body>
   <h1>Admin - Properties</h1>
+  <div class="controls">
+    <a href="/admin/add_property">+ Add Property</a>
+  </div>
+
   <div class="property-grid" id="propertyGrid"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
   <script>
-  async function fetchProperties() {
-    const res = await fetch('/api/properties');
-    const data = await res.json();
-    const grid = document.getElementById('propertyGrid');
-    data.forEach((p, index) => {
-      const div = document.createElement('div');
-      div.className = 'property-card';
+    async function fetchProperties() {
+      const res = await fetch('/api/properties');
+      const data = await res.json();
+      const grid = document.getElementById('propertyGrid');
+      data.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'property-card';
 
-      const swiperId = `swiper-${index}`;
-      const slides = p.images.map(img =>
-        `<div class='swiper-slide'><img src='${img}' style='width:100%;border-radius:6px;'/></div>`
-      ).join("");
+        const slides = p.images.map(img =>
+          `<div class='swiper-slide'><img src='${img}' /></div>`
+        ).join("");
 
-      div.innerHTML = `
-        <h3>${p.name || 'Unnamed Property'}</h3>
-        <p><strong>Location:</strong> ${p.location || '-'}</p>
-        <p><strong>Bedrooms:</strong> ${p.bedrooms ?? '-'}</p>
-        <p><strong>Guests:</strong> ${p.guests ?? '-'}</p>
-        <p><strong>Beds:</strong> ${p.beds ?? '-'}</p>
-        <p><strong>Baths:</strong> ${p.baths ?? '-'}</p>
-        <p><strong>Price:</strong> ₹${p.price_per_night ?? '—'}</p>
-        <p>${p.short_description || ''}</p>
-        <div class="swiper" id="${swiperId}">
-          <div class="swiper-wrapper">${slides}</div>
-          <div class="swiper-pagination"></div>
-        </div>
-      `;
+        div.innerHTML = `
+  <div class="swiper">
+    <div class="swiper-wrapper">${slides}</div>
+    <div class="swiper-pagination"></div>
+  </div>
+  <h3>${p.name}</h3>
+  <p><strong>Location:</strong> ${p.location}</p>
+  <p><strong>Bedrooms:</strong> ${p.bedrooms}</p>
+  <p><strong>Guests:</strong> ${p.guests}</p>
+  <p><strong>Beds:</strong> ${p.beds}</p>
+  <p><strong>Baths:</strong> ${p.baths}</p>
+  <p><strong>Price:</strong> ₹${p.price}</p>
+  <p><strong>Description:</strong> ${p.short_description}</p>
+  <div class="btn-group">
+    <a href="/admin/edit_property/${p.id}" class="btn-edit">Edit</a>
+    <form action="/admin/delete_property/${p.id}" method="post" onsubmit="return confirm('Are you sure you want to delete this property?')">
+      <button type="submit" class="btn-delete">Delete</button>
+    </form>
+  </div>
+`;
+        grid.appendChild(div);
 
-      grid.appendChild(div);
-
-      new Swiper(`#${swiperId}`, {
-        loop: true,
-        pagination: { el: '.swiper-pagination' }
+        new Swiper(div.querySelector('.swiper'), {
+          loop: true,
+          pagination: {
+            el: div.querySelector('.swiper-pagination'),
+            clickable: true,
+          }
+        });
       });
-    });
-  }
+    }
 
-  fetchProperties();
-</script>
+    fetchProperties();
+  </script>
 </body>
 </html>
