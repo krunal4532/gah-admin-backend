@@ -23,17 +23,16 @@ def get_db_connection():
 @app.route('/api/properties')
 def get_properties():
     conn = get_db_connection()
-    cur = conn.cursor(dictionary=True)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # Get all properties
-    cur.execute("SELECT * FROM properties WHERE visible = 1")
+    cur.execute("SELECT * FROM properties WHERE visible = TRUE ORDER BY id")
     properties = cur.fetchall()
 
-    # Get images and attach to each property
-    for prop in properties:
-        cur.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
+    for p in properties:
+        cur.execute("SELECT image_filename FROM images WHERE property_id = %s ORDER BY id", (p['id'],))
         images = cur.fetchall()
-        prop['images'] = [('/' + img['image_filename'].lstrip('/')).replace('//', '/') for img in images]
+        # Prepend /static/ if not already
+        p['images'] = ['/static/' + img['image_filename'].lstrip('/') for img in images]
 
     cur.close()
     conn.close()
