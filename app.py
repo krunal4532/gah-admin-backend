@@ -198,15 +198,17 @@ def delete_property(property_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Correct table: delete related images first
+    # First delete related images
     cursor.execute("DELETE FROM images WHERE property_id = %s", (property_id,))
+
+    # Then delete the property
     cursor.execute("DELETE FROM properties WHERE id = %s", (property_id,))
 
     conn.commit()
     cursor.close()
     conn.close()
 
-    flash('Property and its images deleted successfully!', 'success')
+    flash('Property deleted successfully.')
     return redirect(url_for('admin_properties'))
 
 @app.route('/admin/destinations')
