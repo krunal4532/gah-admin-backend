@@ -21,32 +21,21 @@ def get_db_connection():
     )
 
 @app.route('/api/properties')
-def api_properties():
+def get_properties():
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cur = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM properties WHERE visible = TRUE")
-    properties = cursor.fetchall()
+    # Get all properties
+    cur.execute("SELECT * FROM properties WHERE visible = 1")
+    properties = cur.fetchall()
 
+    # Get images and attach to each property
     for prop in properties:
-        cursor.execute("""
-            SELECT image_filename 
-            FROM images 
-            WHERE property_id = %s 
-            ORDER BY image_filename
-        """, (prop['id'],))
-        images = cursor.fetchall()
+        cur.execute("SELECT image_filename FROM images WHERE property_id = %s", (prop['id'],))
+        images = cur.fetchall()
+        prop['images'] = [('/' + img['image_filename'].lstrip('/')).replace('//', '/') for img in images]
 
-        prop['images'] = []
-        for img in images:
-            filename = img['image_filename']
-            if filename:
-                # Strip leading 'static/' if it exists
-                if filename.startswith("static/"):
-                    filename = filename[len("static/"):]
-                prop['images'].append(url_for('static', filename=filename))
-
-    cursor.close()
+    cur.close()
     conn.close()
     return jsonify(properties)
 
