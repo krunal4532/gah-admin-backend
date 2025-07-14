@@ -110,32 +110,33 @@ def admin_properties():
     conn.close()
     return render_template("admin/admin_properties.html", properties=properties)
 
-@app.route('/admin/properties/add', methods=['GET', 'POST'])
+@app.route('/admin/add_property', methods=['POST'])
 @login_required
 def add_property():
-    if request.method == 'POST':
-        state = request.form['state']
-        location = request.form['location']
-        name = request.form['name']
-        bedrooms = request.form['bedrooms']
-        guests = request.form['guests']
-        beds = request.form['beds']
-        baths = request.form['baths']
-        price = request.form['price']
-        short_description = request.form['short_description']
-        visible = 'visible' in request.form
+    name = request.form['name']
+    location = request.form['location']
+    state = request.form['state']
+    bedrooms = request.form.get('bedrooms', None)
+    beds = request.form.get('beds', None)
+    baths = request.form.get('baths', None)
+    guests = request.form.get('guests', None)
+    price = request.form.get('price', None)
+    short_description = request.form.get('short_description', '')
+    visible = 'visible' in request.form
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO properties (state, location, name, bedrooms, guests, beds, baths, price_per_night, short_description, visible)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (state, location, name, bedrooms, guests, beds, baths, price, short_description, visible))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return redirect(url_for('admin/admin_properties'))
-    return render_template('admin/add_property.html')
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO properties (name, location, state, bedrooms, beds, baths, guests, price_per_night, short_description, visible)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (name, location, state, bedrooms, beds, baths, guests, price, short_description, visible))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash('New property added successfully.')
+    return redirect(url_for('admin_properties'))
 
 @app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
 @login_required
