@@ -31,8 +31,9 @@ def get_properties():
     for p in properties:
         cur.execute("SELECT image_filename FROM images WHERE property_id = %s ORDER BY id", (p['id'],))
         images = cur.fetchall()
-        # Prepend /static/ if not already
-        p['images'] = ['/static/' + img['image_filename'].lstrip('/') for img in images]
+
+        # DO NOT prefix 'static/' again if it's already in DB
+        p['images'] = ['/' + img['image_filename'].lstrip('/') for img in images]
 
     cur.close()
     conn.close()
