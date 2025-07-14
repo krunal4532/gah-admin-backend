@@ -192,7 +192,7 @@ def toggle_visibility(property_id):
     flash("Visibility updated.", "success")
     return redirect(url_for("admin_properties"))
 
-@app.route('/admin/delete_property/<int:property_id>')
+@app.route('/admin/delete_property/<int:property_id>', methods=['POST'])
 @login_required
 def delete_property(property_id):
     conn = get_db_connection()
