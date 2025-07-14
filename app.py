@@ -193,24 +193,21 @@ def toggle_visibility(property_id):
     return redirect(url_for("admin_properties"))
 
 @app.route('/admin/delete_property/<int:property_id>', methods=['POST'])
-@admin_required
+@login_required
 def delete_property(property_id):
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # DELETE from property_images first (not images)
-    cursor.execute("DELETE FROM property_images WHERE property_id = %s", (property_id,))
-
-    # THEN delete the property itself
+    # Correct table: delete related images first
+    cursor.execute("DELETE FROM images WHERE property_id = %s", (property_id,))
     cursor.execute("DELETE FROM properties WHERE id = %s", (property_id,))
 
     conn.commit()
     cursor.close()
     conn.close()
 
-    flash('Property and associated images deleted successfully!', 'success')
+    flash('Property and its images deleted successfully!', 'success')
     return redirect(url_for('admin_properties'))
-
 
 @app.route('/admin/destinations')
 @login_required
