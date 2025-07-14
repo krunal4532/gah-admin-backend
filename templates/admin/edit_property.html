@@ -34,7 +34,7 @@
 <textarea name="short_description" rows="3">{{ prop.short_description or '' }}</textarea><br>
 
         <label>Visible:</label>
-        <input type="checkbox" name="visible" {% if property.visible %}checked{% endif %}><br><br>
+        <input type="checkbox" name="visible" {% if prop.visible %}checked{% endif %}><br><br>
 
         <label>Upload More Images:</label>
         <input type="file" name="images" multiple><br><br>
