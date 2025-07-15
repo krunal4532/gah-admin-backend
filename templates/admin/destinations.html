@@ -33,7 +33,7 @@
     <p>{{ dest.description }}</p>
     <img src="{{ url_for('static', filename='uploads/' ~ dest.image_filename) }}" width="200" />
 
-    <form action="{{ url_for('toggle_visibility', id=dest.id) }}" method="post">
+    <form action="{{ url_for('toggle_visibility', property_id=dest.id) }}" method="post">
       <button type="submit">
         {{ 'Hide' if dest.visible else 'Show' }}
       </button>
