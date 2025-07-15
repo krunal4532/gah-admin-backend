@@ -110,33 +110,37 @@ def admin_properties():
     conn.close()
     return render_template("admin/admin_properties.html", properties=properties)
 
-@app.route('/admin/add_property', methods=['POST'])
+@app.route('/admin/add_property', methods=['GET', 'POST'])
 @login_required
 def add_property():
-    name = request.form['name']
-    location = request.form['location']
-    state = request.form['state']
-    bedrooms = request.form.get('bedrooms', None)
-    beds = request.form.get('beds', None)
-    baths = request.form.get('baths', None)
-    guests = request.form.get('guests', None)
-    price = request.form.get('price', None)
-    short_description = request.form.get('short_description', '')
-    visible = 'visible' in request.form
+    if request.method == 'POST':
+        # Handle form submission
+        name = request.form['name']
+        location = request.form['location']
+        state = request.form['state']
+        bedrooms = request.form.get('bedrooms')
+        beds = request.form.get('beds')
+        baths = request.form.get('baths')
+        guests = request.form.get('guests')
+        price = request.form.get('price')
+        short_description = request.form.get('short_description')
+        visible = 'visible' in request.form
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO properties (name, location, state, bedrooms, beds, baths, guests, price_per_night, short_description, visible)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (name, location, state, bedrooms, beds, baths, guests, price, short_description, visible))
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO properties (name, location, state, bedrooms, beds, baths, guests, price_per_night, short_description, visible)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (name, location, state, bedrooms, beds, baths, guests, price, short_description, visible))
+        conn.commit()
+        cursor.close()
+        conn.close()
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+        flash("Property added successfully.")
+        return redirect(url_for('admin_properties'))
 
-    flash('New property added successfully.')
-    return redirect(url_for('admin_properties'))
+    # Render the add_property.html template when GET request
+    return render_template('admin/add_property.html')
 
 @app.route('/admin/edit_property/<int:property_id>', methods=['GET', 'POST'])
 @login_required
