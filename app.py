@@ -272,6 +272,19 @@ def edit_destination(id):
         cursor.close()
         conn.close()
         return render_template('admin/edit_destination.html', dest=dest)
+		
+@app.route('/admin/toggle_destination_visibility/<int:id>', methods=['POST'])
+@login_required
+def toggle_destination_visibility(id):
+    # logic to toggle visibility
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE destinations SET visible = NOT visible WHERE id = %s", (id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return redirect(url_for('manage_destinations'))
+
 
 @app.route('/admin/destinations/delete/<int:id>')
 @login_required

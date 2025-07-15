@@ -38,7 +38,7 @@
             {% endif %}
         </td>
         <td>
-            <form action="{{ url_for('toggle_destination_visibility', id=d.id) }}" method="POST">
+            <form action="{{ url_for('toggle_visibility', id=dest.id) }}" method="post">
                 <label class="switch">
                     <input type="checkbox" onchange="this.form.submit()" {% if d.visible %}checked{% endif %}>
                     <span class="slider"></span>
