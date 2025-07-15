@@ -27,30 +27,19 @@
         <th>Visible</th>
         <th>Actions</th>
     </tr>
-    {% for d in destinations %}
-    <tr>
-        <td>{{ d.name }}</td>
-        <td>{{ d.description }}</td>
-        <td>{{ d.more_info }}</td> <!-- Show the 'more_info' text -->
-        <td>
-            {% if d.image_filename %}
-                <img src='https://admin.greataccessholidays.com/static/uploads/${d.image_filename}' ... />
-            {% endif %}
-        </td>
-        <td>
-            <form action="{{ url_for('toggle_visibility', id=dest.id) }}" method="post">
-                <label class="switch">
-                    <input type="checkbox" onchange="this.form.submit()" {% if d.visible %}checked{% endif %}>
-                    <span class="slider"></span>
-                </label>
-            </form>
-        </td>
-        <td>
-            <a href="{{ url_for('edit_destination', id=d.id) }}">Edit</a> |
-            <a href="{{ url_for('delete_destination', id=d.id) }}" onclick="return confirm('Delete this destination?')">Delete</a>
-        </td>
-    </tr>
-    {% endfor %}
+    {% for dest in destinations %}
+  <div class="destination-card">
+    <h3>{{ dest.name }}</h3>
+    <p>{{ dest.description }}</p>
+    <img src="{{ url_for('static', filename='uploads/' ~ dest.image_filename) }}" width="200" />
+
+    <form action="{{ url_for('toggle_visibility', id=dest.id) }}" method="post">
+      <button type="submit">
+        {{ 'Hide' if dest.visible else 'Show' }}
+      </button>
+    </form>
+  </div>
+{% endfor %}
 </table>
 </body>
 </html>
