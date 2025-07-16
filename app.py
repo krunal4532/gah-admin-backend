@@ -276,7 +276,7 @@ def edit_destination(id):
         dest = cursor.fetchone()
         cursor.close()
         conn.close()
-        return render_template('admin/edit_destination.html', dest=dest)
+        return render_template('admin/edit_destination.html', destination=dest)
 		
 @app.route('/admin/toggle_destination_visibility/<int:id>', methods=['POST'])
 @login_required
