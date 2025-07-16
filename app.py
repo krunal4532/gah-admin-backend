@@ -220,10 +220,9 @@ def delete_property(property_id):
 @login_required
 def view_destinations():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM destinations")
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT * FROM destinations ORDER BY id")
     destinations = cursor.fetchall()
-    cursor.close()
     conn.close()
     return render_template('admin/destinations.html', destinations=destinations)
 
