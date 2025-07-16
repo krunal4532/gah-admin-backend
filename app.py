@@ -227,25 +227,31 @@ def view_destinations():
     conn.close()
     return render_template('admin/destinations.html', destinations=destinations)
 
-@app.route('/admin/destinations/add', methods=['GET', 'POST'])
+@app.route('/admin/add_destination', methods=['GET', 'POST'])
 @login_required
 def add_destination():
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
-        more_info = request.form['more_info']
-        visible = 'visible' in request.form
+        image = request.files['image']
+        visible = bool(request.form.get('visible'))
 
+        # Save image
+        filename = secure_filename(image.filename)
+        image.save(os.path.join('static/uploads/destinations', filename))
+
+        # Save to DB
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO destinations (name, description, more_info, visible)
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO destinations (name, description, image_filename, visible)
             VALUES (%s, %s, %s, %s)
-        """, (name, description, more_info, visible))
+        """, (name, description, filename, visible))
         conn.commit()
-        cursor.close()
         conn.close()
-        return redirect(url_for('view_destinations'))
+
+        return redirect('/admin/destinations')
+
     return render_template('admin/add_destination.html')
 
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
