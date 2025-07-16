@@ -7,6 +7,7 @@ import os
 from flask import jsonify
 from psycopg2.extras import RealDictCursor
 from werkzeug.utils import secure_filename
+import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "defaultsecretkey")
@@ -236,9 +237,14 @@ def add_destination():
         image = request.files['image']
         visible = bool(request.form.get('visible'))
 
+        # Ensure the folder exists before saving
+        upload_folder = 'static/uploads/destinations'
+        os.makedirs(upload_folder, exist_ok=True)
+
         # Save image
         filename = secure_filename(image.filename)
-        image.save(os.path.join('static/uploads/destinations', filename))
+        image_path = os.path.join(upload_folder, filename)
+        image.save(image_path)
 
         # Save to DB
         conn = get_db_connection()
