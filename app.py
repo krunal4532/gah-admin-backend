@@ -289,8 +289,7 @@ def toggle_destination_visibility(id):
     conn.commit()
     cursor.close()
     conn.close()
-    return redirect(url_for('manage_destinations'))
-
+    return redirect(url_for('view_destinations'))
 
 @app.route('/admin/destinations/delete/<int:id>')
 @login_required
