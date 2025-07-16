@@ -6,6 +6,7 @@ import psycopg2.extras
 import os
 from flask import jsonify
 from psycopg2.extras import RealDictCursor
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "defaultsecretkey")
