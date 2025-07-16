@@ -238,7 +238,7 @@ def add_destination():
         visible = bool(request.form.get('visible'))
 
         # Ensure the folder exists before saving
-        upload_folder = 'static/uploads/destinations'
+        upload_folder = 'static/uploads'
         os.makedirs(upload_folder, exist_ok=True)
 
         # Save image
