@@ -234,18 +234,17 @@ def add_destination():
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
-        image = request.files.get('image')
-        visible = 'visible' in request.form  # Checkbox returns 'on' if checked
+        image = request.files['image']
+        visible = bool(request.form.get('visible'))
 
-        # Ensure the upload folder exists
+        # Ensure the folder exists before saving
         upload_folder = 'static/uploads'
         os.makedirs(upload_folder, exist_ok=True)
 
-        filename = ''
-        if image and image.filename != '':
-            filename = secure_filename(image.filename)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
+        # Save image
+        filename = secure_filename(image.filename)
+        image_path = os.path.join(upload_folder, filename)
+        image.save(image_path)
 
         # Save to DB
         conn = get_db_connection()
@@ -259,7 +258,7 @@ def add_destination():
 
         return redirect('/admin/destinations')
 
-    return render_template('admin/add_destination.html')@app.route('/admin/add_destination', methods=['GET', 'POST'])
+    return render_template('admin/add_destination.html')
 
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
