@@ -297,16 +297,15 @@ def toggle_destination_visibility(id):
     conn.close()
     return redirect(url_for('view_destinations'))
 
-@app.route('/admin/destinations/delete/<int:id>')
+@app.route('/admin/destinations/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_destination(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM destinations WHERE id = %s", (id,))
+    cur = conn.cursor()
+    cur.execute('DELETE FROM destinations WHERE id = %s', (id,))
     conn.commit()
-    cursor.close()
     conn.close()
-    return redirect(url_for('admin/view_destinations'))
+    return redirect(url_for('view_destinations'))
 
 @app.route('/admin/cruises')
 @login_required
