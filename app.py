@@ -218,14 +218,18 @@ def delete_property(property_id):
     flash('Property deleted successfully.')
     return redirect(url_for('admin_properties'))
 
-@app.route('/destinations/<int:id>')
-def destination_detail(id):
+# ---- DESTINATIONS ----
+
+@app.route('/admin/destinations')
+@login_required
+def view_destinations():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM destinations WHERE id = %s', (id,))
-    dest = cur.fetchone()
+    cur.execute("SELECT * FROM destinations ORDER BY id DESC")
+    destinations = cur.fetchall()
     conn.close()
-    return render_template('frontend/destination_detail.html', destination=dest)
+    return render_template('admin/destinations.html', destinations=destinations)
+
 
 @app.route('/admin/add_destination', methods=['GET', 'POST'])
 @login_required
@@ -236,16 +240,13 @@ def add_destination():
         image = request.files['image']
         visible = bool(request.form.get('visible'))
 
-        # Ensure the folder exists before saving
         upload_folder = 'static/uploads'
         os.makedirs(upload_folder, exist_ok=True)
 
-        # Save image
         filename = secure_filename(image.filename)
         image_path = os.path.join(upload_folder, filename)
         image.save(image_path)
 
-        # Save to DB
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
@@ -255,46 +256,57 @@ def add_destination():
         conn.commit()
         conn.close()
 
-        return redirect('/admin/destinations')
+        return redirect(url_for('view_destinations'))
 
     return render_template('admin/add_destination.html')
+
+
+@app.route('/admin/destination/<int:id>')
+@login_required
+def destination_detail(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM destinations WHERE id = %s', (id,))
+    destination = cur.fetchone()
+    conn.close()
+    if destination:
+        return render_template('admin/destination_detail.html', destination=destination)
+    else:
+        return "Destination not found", 404
+
 
 @app.route('/admin/destinations/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_destination(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM destinations WHERE id = %s', (id,))
+    destination = cur.fetchone()
+
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
-        more_info = request.form['more_info']
-        visible = 'visible' in request.form
+        visible = bool(request.form.get('visible'))
 
-        cursor.execute("""
-            UPDATE destinations SET name=%s, description=%s, more_info=%s, visible=%s WHERE id=%s
-        """, (name, description, more_info, visible, id))
+        if 'image' in request.files and request.files['image'].filename != '':
+            image = request.files['image']
+            filename = secure_filename(image.filename)
+            image.save(os.path.join('static/uploads', filename))
+        else:
+            filename = destination['image_filename']
+
+        cur.execute("""
+            UPDATE destinations
+            SET name = %s, description = %s, image_filename = %s, visible = %s
+            WHERE id = %s
+        """, (name, description, filename, visible, id))
         conn.commit()
-        cursor.close()
         conn.close()
         return redirect(url_for('view_destinations'))
-    else:
-        cursor.execute("SELECT * FROM destinations WHERE id = %s", (id,))
-        dest = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        return render_template('admin/edit_destination.html', destination=dest)
-		
-@app.route('/admin/toggle_destination_visibility/<int:id>', methods=['POST'])
-@login_required
-def toggle_destination_visibility(id):
-    # logic to toggle visibility
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE destinations SET visible = NOT visible WHERE id = %s", (id,))
-    conn.commit()
-    cursor.close()
+
     conn.close()
-    return redirect(url_for('view_destinations'))
+    return render_template('admin/edit_destination.html', destination=destination)
+
 
 @app.route('/admin/destinations/delete/<int:id>', methods=['POST'])
 @login_required
@@ -303,6 +315,21 @@ def delete_destination(id):
     cur = conn.cursor()
     cur.execute('DELETE FROM destinations WHERE id = %s', (id,))
     conn.commit()
+    conn.close()
+    return redirect(url_for('view_destinations'))
+
+
+@app.route('/admin/destinations/toggle/<int:id>', methods=['POST'])
+@login_required
+def toggle_destination_visibility(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT visible FROM destinations WHERE id = %s", (id,))
+    current = cur.fetchone()
+    if current:
+        new_value = not current['visible']
+        cur.execute("UPDATE destinations SET visible = %s WHERE id = %s", (new_value, id))
+        conn.commit()
     conn.close()
     return redirect(url_for('view_destinations'))
 
