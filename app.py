@@ -218,15 +218,14 @@ def delete_property(property_id):
     flash('Property deleted successfully.')
     return redirect(url_for('admin_properties'))
 
-@app.route('/admin/destinations')
-@login_required
-def view_destinations():
+@app.route('/destinations/<int:id>')
+def destination_detail(id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    cursor.execute("SELECT * FROM destinations ORDER BY id")
-    destinations = cursor.fetchall()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM destinations WHERE id = %s', (id,))
+    dest = cur.fetchone()
     conn.close()
-    return render_template('admin/destinations.html', destinations=destinations)
+    return render_template('frontend/destination_detail.html', destination=dest)
 
 @app.route('/admin/add_destination', methods=['GET', 'POST'])
 @login_required
