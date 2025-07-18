@@ -286,8 +286,10 @@ def edit_destination(id):
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
+        more_info = request.form['more_info']
         visible = bool(request.form.get('visible'))
 
+        # Image upload
         if 'image' in request.files and request.files['image'].filename != '':
             image = request.files['image']
             filename = secure_filename(image.filename)
@@ -295,11 +297,13 @@ def edit_destination(id):
         else:
             filename = destination['image_filename']
 
+        # Update the DB
         cur.execute("""
             UPDATE destinations
-            SET name = %s, description = %s, image_filename = %s, visible = %s
+            SET name = %s, description = %s, more_info = %s, image_filename = %s, visible = %s
             WHERE id = %s
-        """, (name, description, filename, visible, id))
+        """, (name, description, more_info, filename, visible, id))
+
         conn.commit()
         conn.close()
         return redirect(url_for('view_destinations'))

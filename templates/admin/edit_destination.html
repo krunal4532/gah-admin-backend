@@ -2,41 +2,49 @@
 <html>
 <head>
     <title>Edit Destination</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Edit Destination</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <p>
-            <label for="name">Name:</label><br>
-           <input type="text" name="name" value="{{ destination.name }}">
-        </p>
-        <p>
-            <label for="description">Description:</label><br>
-            <textarea name="description" rows="4" cols="50">{{ destination.description }}</textarea>
-        </p>
-        <p>
-            <label for="more_info">More Info:</label><br>
-            <textarea name="more_info" rows="4" cols="50">{{ destination.more_info }}</textarea>
-        </p>
-        <p>
-            <label>Current Image:</label><br>
+<body class="bg-light">
+<div class="container py-5">
+    <h2 class="mb-4">Edit Destination</h2>
+    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+        <div class="mb-3">
+            <label for="name" class="form-label">Name:</label>
+            <input type="text" name="name" value="{{ destination.name }}" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description:</label>
+            <textarea name="description" rows="4" class="form-control" required>{{ destination.description }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">More Info:</label>
+            <textarea name="more_info" rows="5" class="form-control">{{ destination.more_info }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Current Image:</label><br>
             {% if destination.image_filename %}
-               <img src='https://admin.greataccessholidays.com/static/uploads/${c.image_filename}' ... />
-<br>
+                <img src="{{ url_for('static', filename='uploads/' ~ destination.image_filename) }}" alt="Current Image" class="img-fluid mb-2" style="max-height: 200px;">
             {% else %}
-                No image uploaded.
+                <p>No image uploaded.</p>
             {% endif %}
-        </p>
-        <p>
-            <label for="image">Change Image:</label><br>
-            <input type="file" name="image">
-        </p>
-        <p>
-            <label for="visible">Visible:</label>
-            <input type="checkbox" name="visible" {% if destination.visible %}checked{% endif %}>
-        </p>
-        <p><button type="submit">Update</button></p>
+        </div>
+
+        <div class="mb-3">
+            <label for="image" class="form-label">Change Image:</label>
+            <input type="file" name="image" class="form-control">
+        </div>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" name="visible" class="form-check-input" id="visibleCheckbox" {% if destination.visible %}checked{% endif %}>
+            <label for="visibleCheckbox" class="form-check-label">Visible</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="{{ url_for('view_destinations') }}" class="btn btn-link">Back to List</a>
     </form>
-    <p><a href="{{ url_for('view_destinations') }}">Back to List</a></p>
+</div>
 </body>
 </html>
