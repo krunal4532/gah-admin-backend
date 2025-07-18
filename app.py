@@ -237,6 +237,7 @@ def add_destination():
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
+        more_info = request.form.get('more_info', '')  # <-- Capture More Info
         image = request.files['image']
         visible = bool(request.form.get('visible'))
 
@@ -250,16 +251,15 @@ def add_destination():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO destinations (name, description, image_filename, visible)
-            VALUES (%s, %s, %s, %s)
-        """, (name, description, filename, visible))
+            INSERT INTO destinations (name, description, more_info, image_filename, visible)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (name, description, more_info, filename, visible))
         conn.commit()
         conn.close()
 
         return redirect(url_for('view_destinations'))
 
     return render_template('admin/add_destination.html')
-
 
 @app.route('/admin/destination/<int:id>')
 @login_required
