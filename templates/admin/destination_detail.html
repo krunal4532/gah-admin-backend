@@ -1,19 +1,19 @@
-<!-- templates/admin/destination_detail.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ destination.name }} - Details</title>
+    <title>{{ destination.name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 <div class="container py-5">
     <h2 class="text-center mb-4">{{ destination.name }}</h2>
-    <div class="card shadow-sm">
+    <div class="card mx-auto" style="max-width: 800px;">
         <img src="{{ url_for('static', filename='uploads/' ~ destination.image_filename) }}" class="card-img-top" alt="{{ destination.name }}">
         <div class="card-body">
-            <p class="card-text">{{ destination.description }}</p>
-            <p class="text-muted">Visibility: {{ 'Visible' if destination.visible else 'Hidden' }}</p>
+            <p><strong>Description:</strong> {{ destination.description }}</p>
+            <p><strong>More Info:</strong> {{ destination.more_info }}</p>  <!-- ✅ Add this line -->
+            <p><strong>Visibility:</strong> {{ 'Visible' if destination.visible else 'Hidden' }}</p>
             <a href="{{ url_for('view_destinations') }}" class="btn btn-primary">Back to List</a>
         </div>
     </div>
